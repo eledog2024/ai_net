@@ -17,7 +17,7 @@
   "bg_resample": false,
 
   "_max_per_class_说明": "每个类别最多取多少张图，按文件名排序取前面的片段；0 表示不限（全量）",
-  "max_per_class": 100,
+  "max_per_class": 0,
 
   "_splits_说明": "要构建哪些子集，对应 Q1 划分表里的 split 取值",
   "splits": ["train", "test"],

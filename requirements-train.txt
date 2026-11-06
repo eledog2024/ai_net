@@ -1,0 +1,8 @@
+numpy
+scipy
+h5py
+openpyxl
+pandas
+matplotlib
+scikit-learn
+pyyaml

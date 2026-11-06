@@ -16,19 +16,28 @@
   "db_floor": -80.0,
 
   "batch_size": 8,
-  "epochs": 10,
+  "epochs": 20,
   "lr": 0.001,
   "weight_decay": 0.0001,
+
+  "val_ratio": 0.1,
+  "amp": true,
+  "lr_scheduler": {
+    "factor": 0.5,
+    "patience": 2,
+    "min_lr": 0.00001
+  },
 
   "num_workers": 0,
 
   "_seeds_说明": "各过程独立的随机种子：init 模型参数初始化、loader 训练集打乱；改其中一个不影响另一个",
   "seeds": {
+    "split": 42,
     "init": 2024,
     "loader": 7
   },
 
-  "device": "cpu",
+  "device": "cuda",
 
   "save_dir": "result/Q3/weights",
   "metrics_xlsx": "result/Q3/train_metrics.xlsx",

@@ -1,4 +1,6 @@
 .vscode/settings.json
+/.venv/
+/.conda/
 
 
 
@@ -13,3 +15,10 @@
 /log
 /.codebuddy
 /other
+
+# 数据文件（含所有子目录）
+*.csv
+*.xlsx
+*.xls
+~$*.xlsx
+~$*.xls

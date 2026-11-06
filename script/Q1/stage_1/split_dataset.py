@@ -101,8 +101,9 @@ def scan_files(extract_dir, log):
 
 
 def assign_splits(records, cfg, log):
-    """按场景分配 train/test；background 按比例随机分（固定种子）。"""
+    """按完整采集批次分配 train/val/test，避免同源 slice 跨集合。"""
     train_scenes = set(cfg["scene_split"]["train_scenes"])
+    val_scenes = set(cfg["scene_split"].get("val_scenes", []))
     test_scenes = set(cfg["scene_split"]["test_scenes"])
 
     bg_records = []
@@ -112,12 +113,14 @@ def assign_splits(records, cfg, log):
             bg_records.append(rec)
         elif scene in train_scenes:
             rec["split"] = "train"
+        elif scene in val_scenes:
+            rec["split"] = "val"
         elif scene in test_scenes:
             rec["split"] = "test"
         else:
             log.warning("未知场景 %s（文件 %s），跳过", scene, rec["file"])
 
-    if bg_records:
+    if bg_records and cfg.get("background", {}).get("include", False):
         seed = cfg["background"]["seed"]
         ratio = cfg["background"]["train_ratio"]
         rng = random.Random(seed)
@@ -128,6 +131,8 @@ def assign_splits(records, cfg, log):
             bg_records[idx]["split"] = "train" if rank < n_train else "test"
         log.info("background %d 个：train %d / test %d（seed=%d）",
                  len(bg_records), n_train, len(bg_records) - n_train, seed)
+    elif bg_records:
+        log.info("background %d 个：主任务排除，留作检测+识别扩展", len(bg_records))
 
     assigned = [r for r in records if r["split"] is not None]
     dropped = len(records) - len(assigned)

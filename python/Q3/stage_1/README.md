@@ -20,7 +20,7 @@ STFT 计算复用 Q2（`python/Q2/stage_1/stft_explore.py` 的 `load_iq` / `stft
 | `dtype` | 缓存精度 `uint8` / `float16` / `float32` | uint8 |
 | `db_floor` | 灰度映射下限（dB，相对峰值） | −80 |
 | `bg_resample` | 某类不足 `max_per_class` 时是否循环补齐 | false |
-| `max_per_class` | 每类最多取多少张图，0 = 不限 | 100 |
+| `max_per_class` | 每类最多取多少张图，0 = 不限 | 0 |
 | `splits` | 构建哪些子集 | train / test |
 | `fs_hz` | 采样率 | 80 MHz |
 | `window` | 窗函数 | hann |
@@ -51,7 +51,6 @@ python python/Q3/stage_1/build_cache.py --max-per-class 4   # 小样本试跑
 
 | 配置 | 张数 | 占用 |
 |---|---|---|
-| 每类 100（BG 52） | 652 + 622 | ≈ 3.9 GiB |
-| 全量 `max_per_class=0`，hop 0.5 | 2164 + 1058 | ≈ 9.8 GiB |
+| 全量 7 类，hop 0.5，1560 帧/图 | 2170 + 1062 | ≈ 9.62 GiB |
 
 C 盘只剩约 6 GiB，所以缓存放在 `data/_q3_cache`（junction 指向 D 盘）。

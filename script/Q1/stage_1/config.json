@@ -9,6 +9,7 @@
   },
 
   "background": {
+    "include": true,
     "train_ratio": 0.7,
     "seed": 42
   }

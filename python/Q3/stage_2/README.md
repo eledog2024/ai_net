@@ -14,7 +14,7 @@ python python/Q3/stage_2/train.py --arch python/Q3/stage_2/arch/cnn4.yaml --tag 
 | 命令行参数 | 含义 |
 |---|---|
 | `--arch` | 覆盖 config 的架构 YAML |
-| `--weights` | 加载 `.pt` 权重继续训练 |
+| `--weights` | 加载模型参数并重新建立优化器，用于微调；不是完整断点续训 |
 | `--epochs` / `--batch-size` / `--lr` | 覆盖训练超参 |
 | `--limit-batches` | 调试：每个 epoch 只跑前 N 个 batch |
 | `--tag` | 权重文件名后缀，便于区分实验 |
@@ -26,16 +26,16 @@ python python/Q3/stage_2/train.py --arch python/Q3/stage_2/arch/cnn4.yaml --tag 
 | `arch` | 架构 YAML 路径 | `arch/cnn4.yaml` |
 | `weights` | 预训练权重，null = 从头训练 | null |
 | `batch_size` | 批大小 | 8 |
-| `epochs` | 训练轮数 | 10 |
+| `epochs` | 训练轮数 | 20 |
 | `lr` / `weight_decay` | Adam 学习率 / 权重衰减 | 1e-3 / 1e-4 |
-| `val_ratio` | 从 train 按原始文件切出的验证集比例 | 0.1 |
+| `val_ratio` | 从 train 按原始采集记录分组划出的验证集比例 | 0.1 |
 | `dtype` / `db_floor` | 必须与 stage_1 一致，决定输入归一化 | uint8 / −80 |
-| `device` | 计算设备 | cpu |
+| `device` | 计算设备 | cuda |
 | `seeds.split` | 切分训练/验证集的随机种子 | 42 |
 | `seeds.init` | 模型参数初始化的随机种子 | 2024 |
 | `seeds.loader` | 训练集打乱（DataLoader）的随机种子 | 7 |
 
-三个种子互相独立：只改其中一个，其余过程的结果不变，便于做单因素对比实验。
+代码固定 Python、NumPy、PyTorch 和 CUDA 随机状态，并请求确定性算法；少数 CUDA 算子仍可能产生极小波动。
 
 ## 3. 架构文件写法（`arch/*.yaml`）
 
@@ -72,9 +72,19 @@ class: MyNet
 ## 4. 数据切分
 
 - train / test 直接取自 Q1 的 `dataset_split.xlsx`（按原始记录分组，不重叠）
-- 验证集从 train 里按**原始文件**再切（默认 10%），保证同一片段切出的两张图落在同一侧
+- 验证集从 train 里按**个体+场景+采集批次**整组划分（默认 10%），同一记录的全部 `slice` 不跨集合
 - 训练监控用验证集；`val_ratio=0` 时退化为用 test 监控（不推荐）
 - test 只在最后用「验证集最优权重」评估一次
+- 代码固定切分、初始化和 DataLoader 随机种子，并请求 CUDA 确定性算法；少数 CUDA 算子仍可能带来极小波动，正式汇报建议运行 3 个初始化种子并报告均值/标准差
+
+### 注意事项
+
+- 本基线始终是 7 类任务：`A、BG、C、D、E、F、G`，不要删除 BG 或把输出层改为 6 类
+- 只能用验证集选择最佳轮次；test 不能参与调参、学习率调整或权重选择
+- 无人机数据必须按 `_slice_` 前的原始记录名整组划分，禁止按单个切片随机拆分
+- BG 文件没有个体、场景和采集批次字段，当前只能按 BG 文件划分；报告中应明确这一限制
+- `dtype`、`db_floor`、`cache_dir` 必须与 stage_1 完全一致，否则输入归一化错误
+- `96.42%` 是修正分组错误前的历史结果，不作为正式结果；覆盖后的 `baseline_v2` 正式结果是 Accuracy `95.76%`、Macro-F1 `95.94%`
 
 ## 5. 输出
 
